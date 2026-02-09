@@ -1,0 +1,50 @@
+# .github/workflows/desplegar-jekyll.yml
+
+name: Desplegar sitio Jekyll en GitHub Pages
+
+on:
+  # Se ejecuta automáticamente al hacer push a la rama principal
+  push:
+    branches: ["main"]
+
+  # Permite ejecutar el workflow manualmente desde la pestaña Actions
+  workflow_dispatch:
+
+# Permisos necesarios para que el token de GitHub pueda desplegar en Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Evita que se ejecuten varios despliegues al mismo tiempo
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  construir-y-desplegar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+
+    steps:
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Construir con Jekyll
+        id: jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+
+      - name: Subir artefacto
+        uses: actions/upload-pages-artifact@v3
+
+      - name: Desplegar en GitHub Pages
+        id: despliegue
+        uses: actions/deploy-pages@v4
